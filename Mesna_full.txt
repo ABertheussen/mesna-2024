@@ -1,0 +1,231 @@
+install.packages("cowplot")
+
+library("cowplot")
+
+getwd()
+#Age-depth modeling
+#Examples underneath
+
+#The folder needs to be called the same as the csv. file!
+Bacon("YOUR.DF")
+#Runs a core several times and tests if the MCMC mixing of your core, with the applied settings, can be trusted
+modelDF <- Baconvergence("YOUR.DF", thick=2)
+
+#Check the headers of the excel
+head(read.csv("YOUR.DF"))
+
+#CORRECT MODEL
+#Choose the specifics relevant for your core
+#https://rstudio-pubs-static.s3.amazonaws.com/90049_57a8a643727a4c128a3c2582ef0fb17d.html
+agedepth <- Bacon("YOUR.DF", depths=seq(0,300, by=0.5))
+
+#Check which files have been generated into the folder
+dir("./YOUR.DF")
+
+#read the text generated from the age-depth model
+mestxt <- read.table("./YOUR.DF.TXT", header = TRUE)
+
+#LOI-data
+
+#Join the generated dates with other data
+mesdat <- join(mestxt, YOUR.DF , type = "full")
+
+#Different types of CSV-files
+write.csv(mesdat, "YOUR.DF")
+write.csv2(mesdat, "YOUR.DF")
+
+#Moving_Averages
+#Moving averages were calculated in the previous CSV files. 
+LOI_MA <- read.csv2("~/YOUR.DF")
+View(LOI_MA)
+
+#Creating some transparent colours
+#https://www.dataanalytics.org.uk/make-transparent-colors-in-r/
+mycol <- rgb(0, 0, 255, max = 255, alpha = 0, names = "blue50")#Creates a transparent colour
+mycol2 <- rgb(0, 0, 255, max = 255, alpha = 30, names = "blue52")#Creates a transparent colour
+
+plotloi <- ggplot(data = LOI_MA,
+       aes(x = median,
+           y = LOI))+
+  geom_line(size = 1, colour = "#0000FF00")+ #Very important to keep one line empty like this
+  geom_line(aes(y=LOI, size = 0.1, colour = "LOI"), size = 1)+
+  geom_line(aes(y=MA10, size = 0.1, colour = "Interval 10"), size = 1)+
+  scale_x_reverse()+
+  theme_bw()+
+  theme(text = element_text(size = 20))+
+  xlab("Median age")+
+  ylab("Loss on ignition")+
+  scale_colour_manual("", 
+                      breaks = c("LOI","Interval 10"),
+                      values = c("#0000FF1E","orange"))+
+  theme(legend.position = "bottom")+
+  theme(axis.text.x = element_text(hjust=0.1))
+
+
+#Isotopes
+iso <- read.csv2("~/YOUR.DF")
+colnames(iso)[8]="C13"
+colnames(iso)[10]="N15"
+
+library(ggplot2)
+#Delta13C
+isoC <- ggplot(data=iso, aes(x=median, y=C13, group=1)) +
+  geom_line(color="blue", size=0.8)+
+  geom_point(size=2)+
+  xlab("Median age")+
+  ylab(expression(paste("\u03B4"^"13","C")))+
+  theme(panel.background = element_blank(), panel.grid.minor=element_line(colour="gray93"))
+
+#Delta15N
+isoN <- ggplot(data=iso, aes(x=median, y=N15, group=1)) +
+  geom_line(color="blue", size=0.8)+
+  geom_point(size=2)+
+  xlab("Median age")+
+  ylab(expression(paste("\u03B4"^"15","N")))+ 
+  theme(panel.background = element_blank(), panel.grid.minor=element_line(colour="gray93"))
+
+#Faecal biomarkers
+
+choose.dir(getwd())
+fb <- read.csv2("~/YOUR.DF")
+
+plot1 <- ggplot(data=fb, aes(x=median, y=omnivor1, group=1)) +
+  geom_line(size = 0.8, color="purple")+
+  geom_point(size=2)+ 
+  ylab("Omnivore 1")+ 
+  xlab("Median age")+ 
+  theme(panel.background = element_blank(), panel.grid.minor=element_line(colour="gray93"))
+
+#if you want you can add a title "ggtitle("Omnivore data 1 data")"
+omnivore2 <- read.csv2("~/YOUR.DF")
+
+plot2 <- ggplot(data=omnivore2, aes(x=median, y=omnivor2, group=1)) +
+  geom_line(size = 0.8, color="purple")+
+  geom_point(size=2)+ 
+  ylab("Omnivore 2")+ 
+  xlab("Median age")+ 
+  theme(panel.background = element_blank(), panel.grid.minor=element_line(colour="gray93"))
+
+#Create a new dataframe to get rid of NAs
+herbivore1 <- read.csv2("~/YOUR.DF")
+
+plot3 <- ggplot(data=herbivore1, aes(x=median, y=herbivor1, group=1)) +
+  geom_line(size=0.8, color="purple")+
+  geom_point(size=2)+ 
+  ylab("Herbivore 1")+ 
+  xlab("Median age")+ 
+  theme(panel.background = element_blank(), panel.grid.minor=element_line(colour="gray93"))
+
+#Create a new dataframe to get rid of NAs
+
+omni1.herbi1 <- read.csv2("~/YOUR.DF")
+
+plot4 <- ggplot(data=omni1.herbi1, aes(x=median, y=omnivor.herbivor1, group=1)) +
+  geom_line(size=0.8, color="purple")+
+  geom_point(size=2)+ 
+  ylab("Omni/herbi")+ 
+  xlab("Median age")+ 
+  theme(panel.background = element_blank(), panel.grid.minor=element_line(colour="gray93"))
+
+#Pollen
+
+install.packages("rioja")
+library("rioja")
+install.packages("readr")
+library("readr")
+install.packages("plyr")
+library("plyr")
+
+#Import pollendata
+ma.pollen.raw <- read_delim("~/YOUR.DF",delim = ";", escape_double = FALSE, trim_ws = TRUE)
+
+#rename column to match mestxt
+names(ma.pollen.raw)[1] <- "depth"
+
+#Join the generated dates with other data
+mesdat2 <- join(mestxt, ma.pollen.raw , type = "full")
+
+#Remove columns that are not necessary
+ma.pollen <- mesdat2[-2:-3,-5:-6]
+ma.pollenrem <- ma.pollen[-3:-4]
+
+#Remove total AP/NAP and pollen concentration columns
+ma.pollen2 <- ma.pollenrem[-68:-71]
+
+#Remove non-numeric columns
+ma.pollen2rem <- ma.pollen2[-3:-4]
+
+#In total there are 50 pollen types in the dataset. Since some of the pollen types occurs very infrequently, we'll remove them from the dataset
+#Remove pollen types where the total abundance is less than 10%
+
+#Omit all NAs that are not 0s
+ma.pollen3 <- na.omit(ma.pollen2)
+
+ma.sum <- colSums(ma.pollen3) #calculate column sums
+ma.pollen5 <- ma.pollen3[,which(ma.sum >10)] #subset data
+
+#OPTIONAL FOR TESTING PURPOSES
+#Remove charcoal: ma.pollen5.noch <- ma.pollen5[-14]
+
+#Re-order data frame to move AP columnn next to tree pollen columns
+ma.pollen5_AP <- ma.pollen5[c(3:9,18, 10:15, 19,17,16, 1:2)]
+
+
+#Create the y-axis based on the joining of the age-depth datings and the pollen
+
+#Isolate the median values
+median_values <- ma.pollen5_AP[-1:-17]
+
+#makeimportant columns numeric
+medianvalues <- lapply(median_values, function(median) as.numeric(median))
+#Check if they are numeric
+str(medianvalues)
+
+#remove depth and median from the primary dataframe
+ma.pollen6 <- ma.pollen5_AP [-18:-19]
+
+#Bar plot colour scheme
+# Set up color vectors
+c.poly <- c(rep("forestgreen", times=7), NA, rep("gold", times=6), rep(NA, times=2))
+c.line <- c(rep(NA, times=7), "brown", rep(NA, times=6), "brown", NA)
+c.bar <- c(rep(NA, times=7), NA, rep(NA, times=6), NA, "darkblue")
+c.polyline <- c(rep("black", times=7), NA, rep("black", times=6), rep(NA, times=2))
+
+# Adjust plot dimensions and create the initial plot
+# Set up color vectors
+c.poly <- c(rep("forestgreen", times=7), NA, rep("gold", times=6), rep(NA, times=2))
+c.line <- c(rep(NA, times=7), "brown", rep(NA, times=6), "brown", NA)
+c.bar <- c(rep(NA, times=7), NA, rep(NA, times=6), NA, "darkblue")
+c.polyline <- c(rep("black", times=7), NA, rep("black", times=6), rep(NA, times=2))
+
+# Set up the layout
+layout(matrix(c(1, 1, 1), nrow = 3), heights = c(5, 5, 4))  # Adjust the heights as needed
+
+# Adjust plot dimensions and create the initial plot
+par(mar=c(10, 10, 10, 10))  # Adjust margin space as needed
+pol.plot <- strat.plot(ma.pollen6, yvar = medianvalues$median, y.tks=medianvalues$median, y.rev=TRUE,
+                       plot.line=FALSE, plot.poly=FALSE, plot.bar=TRUE, col.bar=c.bar, lwd.bar=10,
+                       scale.percent=TRUE, xSpace=0.02, x.pc.lab=TRUE, x.pc.omit0=TRUE, las=2,
+                       srt.xlabel=30, y.axis=TRUE, cex.xlabel = 0.75)
+
+# Add line plot
+pol.plot <- strat.plot(ma.pollen6, yvar=medianvalues$median, y.tks=medianvalues$median, y.rev=TRUE,
+                       plot.line=TRUE, plot.poly=FALSE, plot.bar=FALSE, col.line=c.line, lwd.line=3,
+                       scale.percent=TRUE, xSpace=0.02, x.pc.lab=TRUE, x.pc.omit0=TRUE, srt.xlabel=30,
+                       las=2, x.axis=FALSE, x.names=NA, y.axis=TRUE, add=TRUE, cex.xlabel = 0.75)
+
+# Add polygon plot
+pol.plot <- strat.plot(ma.pollen6, yvar=medianvalues$median, y.tks=medianvalues$median, y.rev=TRUE,
+                       plot.line=FALSE, plot.poly=TRUE, plot.bar=TRUE, col.poly=c.poly, col.poly.line=c.polyline,
+                       col.bar=c.polyline, scale.percent=TRUE, xSpace=0.02, x.pc.lab=TRUE, x.pc.omit0=TRUE,
+                       srt.xlabel=30, las=2, x.axis=FALSE, x.names=NA, y.axis=TRUE, add=TRUE, cex.xlabel = 0.75)
+
+
+#Extra tips for Rioja, but do not do this!
+#If you want to remove a column you can do it like this
+#ma.pollen5.noch <- ma.pollen5[-14]
+
+#Combine all the plots
+
+#only works for ggplot? Rioja-pollen figure does not want to compute with this. 
+grid <- plot_grid(plot1, plot2, plot3, plot4, isoN, isoC, labels = c('A', 'B', 'C', 'D', 'E', 'F'), label_size = 12)
