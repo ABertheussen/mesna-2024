@@ -1,6 +1,9 @@
 install.packages("cowplot")
-
 library("cowplot")
+install.packages("rbacon")
+library("rbacon")
+install.packages("ggplot")
+library("ggplot")
 
 getwd()
 #Age-depth modeling
@@ -221,11 +224,9 @@ pol.plot <- strat.plot(ma.pollen6, yvar=medianvalues$median, y.tks=medianvalues$
                        srt.xlabel=30, las=2, x.axis=FALSE, x.names=NA, y.axis=TRUE, add=TRUE, cex.xlabel = 0.75)
 
 
-#Extra tips for Rioja, but do not do this!
+#Extra tips for Rioja
 #If you want to remove a column you can do it like this
 #ma.pollen5.noch <- ma.pollen5[-14]
 
-#Combine all the plots
+#You can now choose to combine all plots either in R or in another software. I chose to do it in another software. 
 
-#only works for ggplot? Rioja-pollen figure does not want to compute with this. 
-grid <- plot_grid(plot1, plot2, plot3, plot4, isoN, isoC, labels = c('A', 'B', 'C', 'D', 'E', 'F'), label_size = 12)
